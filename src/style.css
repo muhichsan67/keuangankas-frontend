@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-cream font-sans text-navy antialiased;
+    min-height: 100dvh;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-steel/30 rounded-full;
+  }
+
+  /* Ubuntu Mono for financial data */
+  .font-financial {
+    font-family: 'Ubuntu Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* App Shell */
+  .app-shell {
+    @apply relative mx-auto w-full max-w-app min-h-screen flex flex-col bg-white;
+    box-shadow: 0 0 60px rgba(26, 50, 99, 0.08);
+  }
+
+  @media (max-width: 420px) {
+    .app-shell {
+      box-shadow: none;
+    }
+  }
+
+  /* Input base */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-steel/30 bg-white
+           text-navy placeholder-steel/60 text-sm
+           transition-all duration-200 ease-out
+           focus:border-warmOrange focus:ring-2 focus:ring-warmOrange/20 focus:outline-none;
+  }
+
+  .input-field.financial {
+    @apply font-mono tracking-wide;
+  }
+
+  /* Button base */
+  .btn-primary {
+    @apply w-full py-3.5 rounded-xl font-semibold text-sm
+           transition-all duration-200 ease-out
+           disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed
+           bg-warmOrange text-navy hover:bg-warmOrange-dark
+           active:scale-[0.98] shadow-sm;
+  }
+
+  .btn-outline {
+    @apply w-full py-3 rounded-xl font-medium text-sm
+           border border-steel/30 text-navy bg-white
+           transition-all duration-200 ease-out
+           hover:border-steel hover:bg-gray-50
+           active:scale-[0.98];
+  }
+
+  /* Card */
+  .card {
+    @apply bg-white rounded-2xl p-4 shadow-card
+           transition-shadow duration-200
+           hover:shadow-card-hover;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-income {
+    @apply bg-emerald-50 text-emerald-700;
+  }
+
+  .badge-expense {
+    @apply bg-rose-50 text-rose-600;
+  }
+
+  /* Page transition */
+  .page-enter-active,
+  .page-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .page-enter-from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .page-leave-to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  /* Fade transition */
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: opacity 0.15s ease;
+  }
+
+  .fade-enter-from,
+  .fade-leave-to {
+    opacity: 0;
+  }
+
+  /* Slide up transition */
+  .slide-up-enter-active,
+  .slide-up-leave-active {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .slide-up-enter-from,
+  .slide-up-leave-to {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@layer utilities {
+  .text-financial {
+    font-family: 'Ubuntu Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
