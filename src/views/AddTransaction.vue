@@ -9,7 +9,7 @@ const router = useRouter()
 // ── State ─────────────────────────────────────────────────────────────
 const type = ref('out')        // 'in' | 'out'
 const amountDisplay = ref('')  // formatted display string
-const category = ref('')
+const categoryId = ref('')
 const date = ref(new Date().toISOString().substring(0, 10))
 const description = ref('')
 const debtId = ref('')
@@ -20,6 +20,7 @@ const receiptPreview = ref(null)
 
 const isLoading = ref(false)
 const isLoadingDebts = ref(false)
+const isLoadingCategories = ref(false)
 const successMsg = ref('')
 const errorMsg = ref('')
 
@@ -28,42 +29,32 @@ const fileInputRef = ref(null)
 // ── Computed ──────────────────────────────────────────────────────────
 const amountRaw = computed(() => parseRupiah(amountDisplay.value))
 
-const isFormReady = computed(() =>
-  amountRaw.value > 0 &&
-  category.value.trim() !== '' &&
-  date.value !== ''
-)
+const isFormReady = computed(() => {
+  return amountRaw.value > 0 &&
+    (categoryId.value !== '' || categoryId.value !== 0) &&
+    date.value !== ''
+})
 
 const showDebtDropdown = computed(() => type.value === 'out' && debts.value.length > 0)
 
 // ── Categories ────────────────────────────────────────────────────────
-const categoriesIn  = ['Gaji', 'Bonus', 'Transfer Masuk', 'Penjualan', 'Lain-lain']
-const categoriesOut = ['Makanan', 'Transportasi', 'Tagihan', 'Belanja', 'Cicilan', 'Kesehatan', 'Lain-lain']
-const activeCategories = computed(() => type.value === 'in' ? categoriesIn : categoriesOut)
+const categories = ref([])
 
 // ── Watch ─────────────────────────────────────────────────────────────
 watch(type, () => {
-  category.value = ''
+  categoryId.value = ''
   debtId.value = ''
-  if (type.value === 'out') fetchDebts()
+  // if (type.value === 'out') fetchDebts()
+  fetchCategories()
 })
 
 // ── Lifecycle ─────────────────────────────────────────────────────────
 onMounted(() => {
-  if (type.value === 'out') fetchDebts()
+  // if (type.value === 'out') fetchDebts()
+  fetchCategories()
 })
 
 // ── Methods ───────────────────────────────────────────────────────────
-function formatAmountInput(e) {
-  const raw = e.target.value.replace(/[^\d]/g, '')
-  const num = Number(raw)
-  if (!raw) {
-    amountDisplay.value = ''
-    return
-  }
-  amountDisplay.value = num.toLocaleString('id-ID')
-}
-
 async function fetchDebts() {
   isLoadingDebts.value = true
   try {
@@ -76,16 +67,33 @@ async function fetchDebts() {
   }
 }
 
-function handleFileChange(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  if (!file.type.startsWith('image/')) {
-    errorMsg.value = 'Hanya file gambar yang diizinkan.'
-    return
+async function fetchCategories() {
+  isLoadingCategories.value = true
+  try {
+    const { data } = await api.get('/categories?type=' + type.value)
+    categories.value = data.data ?? data
+  } catch (err) {
+    categories.value = []
+  } finally {
+    isLoadingCategories.value = false
   }
+}
+function formatAmountInput(event) {
+  // Ambil angka saja dari input, lalu format ulang sebagai Rupiah
+  const raw = event.target.value.replace(/\D/g, '')
+  const num = parseInt(raw || '0', 10)
+  amountDisplay.value = num > 0 ? formatRupiah(num).replace('Rp ', '').trim() : ''
+  // Pindahkan kursor ke akhir supaya tidak loncat-loncat
+  event.target.value = amountDisplay.value
+}
+
+function handleFileChange(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
   receiptFile.value = file
-  receiptPreview.value = URL.createObjectURL(file)
-  errorMsg.value = ''
+  const reader = new FileReader()
+  reader.onload = (e) => { receiptPreview.value = e.target.result }
+  reader.readAsDataURL(file)
 }
 
 function removeReceipt() {
@@ -104,12 +112,12 @@ async function handleSubmit() {
     const formData = new FormData()
     formData.append('type', type.value)
     formData.append('amount', amountRaw.value)
-    formData.append('category', category.value)
+    formData.append('category', categoryId.value)
     formData.append('date', date.value)
     formData.append('description', description.value)
-    if (type.value === 'out' && debtId.value) {
-      formData.append('debt_id', debtId.value)
-    }
+    // if (type.value === 'out' && debtId.value) {
+    //   formData.append('debt_id', debtId.value)
+    // }
     if (receiptFile.value) {
       formData.append('receipt', receiptFile.value)
     }
@@ -122,7 +130,7 @@ async function handleSubmit() {
     // Reset form
     type.value = 'out'
     amountDisplay.value = ''
-    category.value = ''
+    categoryId.value = ''
     date.value = new Date().toISOString().substring(0, 10)
     description.value = ''
     debtId.value = ''
@@ -207,11 +215,11 @@ async function handleSubmit() {
         <label for="select-category" class="text-xs font-medium text-navy/70">Kategori</label>
         <select
           id="select-category"
-          v-model="category"
+          v-model="categoryId"
           class="input-field appearance-none"
         >
           <option value="" disabled>Pilih kategori...</option>
-          <option v-for="cat in activeCategories" :key="cat" :value="cat">{{ cat }}</option>
+          <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
         </select>
       </div>
 
